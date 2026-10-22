@@ -18,7 +18,7 @@ Application pour téléphone, aux couleurs du Ici (store rouge, moutarde, bois e
 - **Calcul rapide** : prix conseillé à partir d'un coût, sans créer de fiche.
 - **Réglages** : objectifs, TVA, arrondi des prix, charges par portion (pour le prix de revient complet et la marge nette), sauvegarde / restauration.
 
-Les données restent **sur le téléphone** (aucun compte, aucun serveur). Pensez à exporter une sauvegarde de temps en temps depuis *Réglages*.
+**Partage avec l'équipe** : les données sont stockées dans une base en ligne (Supabase, projet `le-ici`) et synchronisées sur tous les téléphones, sans compte ni mot de passe. Les changements arrivent sur les autres téléphones en quelques secondes. Hors connexion, l'appli continue de marcher et envoie les modifications au retour du réseau. Chaque version est archivée dans la table `items_history`. L'appli peut lire, ajouter et modifier, mais pas supprimer définitivement : une suppression est enregistrée comme `deleted = true`. Sans réseau ni configuration (`js/config.js` vide), l'appli fonctionne seule sur le téléphone.
 
 ## Les formules
 
@@ -59,6 +59,7 @@ npm test    # tests du moteur de calcul
 
 - `js/calc.js` — calculs (unités, coûts, prix), testés dans `test/`
 - `js/store.js` — stockage local
+- `js/sync.js` — synchronisation avec la base partagée (`js/config.js` : adresse et clé publique)
 - `js/scanner.js` — scan (BarcodeDetector natif, ou ZXing dans `vendor/` sur iPhone) et Open Food Facts
 - `js/app.js` — écrans
 - `js/help.js` — textes d'aide et lexique

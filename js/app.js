@@ -16,6 +16,7 @@ import { db } from './store.js';
 import { scanBarcode, lookupProduct } from './scanner.js';
 import { icons } from './icons.js';
 import { HELP, GLOSSARY } from './help.js';
+import * as sync from './sync.js';
 
 let $app = document.getElementById('app');
 const $title = document.getElementById('title');
@@ -231,6 +232,55 @@ const routes = [
   [/^#\/aide$/, viewGuide, 'detail'],
 ];
 
+// ---------- Modifications reçues de l'équipe ----------
+
+let remoteRenderPending = false;
+const isTyping = () => {
+  const a = document.activeElement;
+  return a && $app.contains(a) && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName);
+};
+
+// Redessine l'écran avec les données reçues, sans couper une saisie en cours
+// ni effacer un formulaire produit pas encore enregistré.
+function refreshFromRemote() {
+  const { path } = parseHash();
+  if (path.startsWith('#/produit/') || path === '#/bienvenue' || document.querySelector('.sheet-wrap') || isTyping()) {
+    remoteRenderPending = path !== '#/bienvenue';
+    return;
+  }
+  render({ restoreScroll: true });
+}
+
+sync.onRemoteChange(refreshFromRemote);
+document.addEventListener('focusout', () =>
+  setTimeout(() => {
+    if (remoteRenderPending && !isTyping() && !document.querySelector('.sheet-wrap') && !parseHash().path.startsWith('#/produit/')) {
+      remoteRenderPending = false;
+      render({ restoreScroll: true });
+    }
+  }, 400),
+);
+
+function syncLine(st) {
+  const ago = st.lastSync ? Math.round((Date.now() - st.lastSync) / 1000) : null;
+  const pending = st.pending ? ` · ${plural(st.pending, 'modification')} en attente` : '';
+  const lines = {
+    off: ['none', 'Désactivé', 'Les données restent sur ce téléphone.'],
+    idle: ['none', 'Connexion…', ''],
+    syncing: ['warn', 'Synchronisation…', ''],
+    ok: ['good', 'À jour', ago != null ? `Dernière synchro il y a ${ago < 60 ? `${ago} s` : `${Math.round(ago / 60)} min`}${pending}` : ''],
+    offline: ['bad', 'Hors connexion', `Vos modifications sont gardées et partiront au retour du réseau${pending}.`],
+    error: ['bad', 'Serveur injoignable', `Vos modifications sont gardées sur ce téléphone et seront envoyées dès que possible${pending}.`],
+  };
+  const [cls, title, sub] = lines[st.state] || lines.idle;
+  return `<i class="dot ${cls}"></i><div><b>${title}</b>${sub ? `<small>${sub}</small>` : ''}</div>`;
+}
+
+sync.onStatus((st) => {
+  const el = document.getElementById('sync-line');
+  if (el) el.innerHTML = syncLine(st);
+});
+
 const scrollMemory = new Map();
 let currentPath = null;
 let depth = 0; // nombre d'écrans ouverts dans l'appli (pour le bouton retour)
@@ -257,6 +307,7 @@ function parseHash() {
 }
 
 function render({ restoreScroll = false } = {}) {
+  remoteRenderPending = false;
   const { path, params } = parseHash();
   if (!isOnboarded() && path !== '#/bienvenue') {
     history.replaceState(null, '', '#/bienvenue');
@@ -1777,6 +1828,19 @@ function viewSettings() {
   const s = db.settings;
   const vatOptions = (cur) => [5.5, 10, 20].map((v) => `<option value="${v}" ${cur === v ? 'selected' : ''}>${fmt(v)} %</option>`).join('');
   $app.innerHTML = `
+    <section class="step">
+      <h2 class="step-title">Partage avec l’équipe ${helpBtn('partage')}</h2>
+      <div class="card">
+        <div class="sync-line" id="sync-line">${syncLine(sync.status)}</div>
+        <p class="hint">${
+          sync.enabled
+            ? 'Toutes les personnes qui utilisent l’appli voient et modifient les mêmes produits, fiches et ventes. Un changement arrive sur les autres téléphones en quelques secondes.'
+            : 'Le partage n’est pas configuré : chaque téléphone a ses propres données.'
+        }</p>
+        ${sync.enabled ? `<button class="btn block" data-sync>Synchroniser maintenant</button>` : ''}
+      </div>
+    </section>
+
     <a class="guide-link" href="#/aide">
       <span class="kind">${icons.book}</span>
       <span><b>Guide d’utilisation</b><small>Comment ça marche, et le sens de chaque mot</small></span>
@@ -1835,7 +1899,11 @@ function viewSettings() {
     <section class="step">
       <h2 class="step-title">Sauvegarde</h2>
       <div class="card">
-        <p class="hint first">Vos données sont <b>uniquement sur ce téléphone</b>. Exportez une sauvegarde régulièrement (envoyez-la vous par mail ou sur un Drive). Elle sert aussi pour passer sur un autre téléphone.</p>
+        <p class="hint first">${
+          sync.enabled
+            ? 'Les données sont déjà sauvegardées en ligne. Un export reste utile comme copie de secours, à garder par mail ou sur un Drive.'
+            : 'Vos données sont <b>uniquement sur ce téléphone</b>. Exportez une sauvegarde régulièrement (envoyez-la vous par mail ou sur un Drive). Elle sert aussi pour passer sur un autre téléphone.'
+        }</p>
         <button class="btn primary block" data-export>${icons.download} Exporter une sauvegarde</button>
         <label class="btn block file-btn">${icons.upload} Restaurer une sauvegarde<input type="file" accept="application/json,.json" hidden /></label>
       </div>
@@ -1863,12 +1931,18 @@ function viewSettings() {
     if (apply(e.target)) toast('Réglage enregistré');
   });
 
+  $app.querySelector('[data-sync]')?.addEventListener('click', async () => {
+    await sync.syncNow();
+    toast(sync.status.state === 'ok' ? 'Données à jour' : 'Serveur injoignable pour l’instant');
+  });
   $app.querySelector('[data-export]').onclick = exportData;
   $app.querySelector('input[type="file"]').onchange = importData;
   $app.querySelector('[data-reset]').onclick = async () => {
     const ok = await confirmSheet({
       title: 'Tout effacer ?',
-      text: 'Tous les produits et toutes les fiches seront supprimés de ce téléphone. Exportez une sauvegarde avant si vous voulez les garder.',
+      text: sync.enabled
+        ? 'Tous les produits, fiches et ventes seront supprimés <b>pour toute l’équipe</b>. Exportez une sauvegarde avant si vous voulez les garder.'
+        : 'Tous les produits et toutes les fiches seront supprimés de ce téléphone. Exportez une sauvegarde avant si vous voulez les garder.',
       ok: 'Tout effacer',
       danger: true,
     });
@@ -1911,7 +1985,7 @@ async function importData(e) {
     if (!Array.isArray(data.ingredients) || !Array.isArray(data.recipes)) throw new Error();
     const ok = await confirmSheet({
       title: 'Restaurer cette sauvegarde ?',
-      text: `Elle contient ${plural(data.ingredients.length, 'produit')} et ${plural(data.recipes.length, 'fiche')}. Vos données actuelles seront remplacées.`,
+      text: `Elle contient ${plural(data.ingredients.length, 'produit')} et ${plural(data.recipes.length, 'fiche')}. ${sync.enabled ? 'Les données actuelles seront remplacées <b>pour toute l’équipe</b>.' : 'Vos données actuelles seront remplacées.'}`,
       ok: 'Restaurer',
     });
     if (!ok) return;
@@ -1987,6 +2061,7 @@ document.getElementById('tab-scan').onclick = (e) => {
 };
 
 navigator.storage?.persist?.();
+sync.startSync();
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
   navigator.serviceWorker.register('sw.js');
 }

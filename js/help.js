@@ -144,6 +144,14 @@ export const HELP = {
     body: `<p>C’est la part des ingrédients sur <b>tout ce que vous avez vendu</b> pendant la période, et non la moyenne de vos fiches.</p>
       <p>Les fiches qui se vendent beaucoup comptent beaucoup, celles qui se vendent peu comptent peu. C’est le chiffre qui correspond à votre vrai coût matière.</p>`,
   },
+  partage: {
+    title: 'Le partage avec l’équipe',
+    body: `<p>Les produits, fiches, ventes et réglages sont enregistrés <b>en ligne</b>, au même endroit pour tout le monde. Il suffit d’ouvrir l’appli : pas de compte, pas de mot de passe.</p>
+      <ul><li>Quand quelqu’un change un prix ou une fiche, les autres téléphones le reçoivent en quelques secondes.</li>
+      <li>Sans réseau (cave, chambre froide), l’appli continue de marcher : les changements partent dès que le réseau revient.</li>
+      <li>Chaque modification est gardée dans un historique en ligne : en cas d’erreur, on peut retrouver une ancienne version.</li></ul>
+      <p>Comme il n’y a pas de mot de passe, toute personne qui a le lien de l’appli peut la modifier : ne le partagez qu’avec l’équipe.</p>`,
+  },
   'code-barres': {
     title: 'Le code-barres',
     body: `<p>Scannez le code-barres de l’emballage avec l’appareil photo du téléphone.</p>
@@ -154,4 +162,4 @@ export const HELP = {
 };
 
 // Ordre du lexique sur la page d'aide.
-export const GLOSSARY = ['ventes-pourquoi', 'classement', 'ratio-reel', 'ht', 'tva', 'ratio', 'objectif', 'prix-conseille', 'marge', 'coef', 'rendement', 'portions', 'preparation', 'charges', 'code-barres'];
+export const GLOSSARY = ['partage', 'ventes-pourquoi', 'classement', 'ratio-reel', 'ht', 'tva', 'ratio', 'objectif', 'prix-conseille', 'marge', 'coef', 'rendement', 'portions', 'preparation', 'charges', 'code-barres'];

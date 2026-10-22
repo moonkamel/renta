@@ -32,13 +32,24 @@ export function normalize(data) {
   };
 }
 
-export function save() {
+let saveHook = null;
+export const setSaveHook = (fn) => (saveHook = fn);
+
+// Enregistre sur le téléphone sans prévenir la synchro (utilisé quand les données viennent du serveur).
+export function saveLocal() {
   try {
     localStorage.setItem(KEY, JSON.stringify(db));
     return true;
   } catch {
     return false;
   }
+}
+
+// Enregistre une modification faite dans l'appli : elle sera aussi envoyée à l'équipe.
+export function save() {
+  const ok = saveLocal();
+  saveHook?.();
+  return ok;
 }
 
 export function replaceAll(data) {

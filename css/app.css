@@ -2380,6 +2380,34 @@ body[data-mode='detail'] .toast {
   color: #fff6e8;
 }
 
+/* ---------- Partage ---------- */
+
+.sync-line {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sync-line .dot {
+  width: 12px;
+  height: 12px;
+}
+
+.dot.warn {
+  background: var(--mustard);
+}
+
+.sync-line b {
+  display: block;
+  font-size: 16px;
+}
+
+.sync-line small {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+}
+
 /* ---------- Ventes ---------- */
 
 .period-bar {
