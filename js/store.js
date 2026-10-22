@@ -27,6 +27,7 @@ export function normalize(data) {
   return {
     ingredients: Array.isArray(data?.ingredients) ? data.ingredients : [],
     recipes: Array.isArray(data?.recipes) ? data.recipes : [],
+    sales: Array.isArray(data?.sales) ? data.sales : [],
     settings: { ...DEFAULT_SETTINGS, ...(data?.settings || {}) },
   };
 }
@@ -44,6 +45,7 @@ export function replaceAll(data) {
   const next = normalize(data);
   db.ingredients = next.ingredients;
   db.recipes = next.recipes;
+  db.sales = next.sales;
   db.settings = next.settings;
   save();
 }
@@ -129,5 +131,29 @@ export function duplicateRecipe(id) {
 export function deleteRecipe(id) {
   db.recipes = db.recipes.filter((r) => r.id !== id);
   for (const r of db.recipes) r.items = r.items.filter((it) => !(it.type === 'rec' && it.ref === id));
+  for (const p of db.sales) delete p.counts?.[id];
+  save();
+}
+
+// ---------- Ventes ----------
+// Une période = des quantités vendues par fiche ({ id, label, counts: { idFiche: qté } }).
+
+const MONTHS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+
+export function createSalesPeriod(label) {
+  const now = new Date();
+  let name = label || `${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
+  const base = name;
+  for (let i = 2; db.sales.some((p) => p.label === name); i++) name = `${base} (${i})`;
+  const period = { id: uid(), label: name, counts: {}, createdAt: Date.now() };
+  db.sales.push(period);
+  save();
+  return period;
+}
+
+export const getSalesPeriod = (id) => db.sales.find((p) => p.id === id);
+
+export function deleteSalesPeriod(id) {
+  db.sales = db.sales.filter((p) => p.id !== id);
   save();
 }

@@ -9,6 +9,7 @@ import {
   pricing,
   roundUp,
   ratioStatus,
+  menuEngineering,
 } from '../js/calc.js';
 
 const close = (a, b, eps = 1e-9) => assert.ok(Math.abs(a - b) < eps, `${a} ≈ ${b}`);
@@ -89,4 +90,20 @@ test('prix conseillé, ratio et coefficient', () => {
   assert.equal(ratioStatus(25, 30), 'good');
   assert.equal(ratioStatus(33, 30), 'warn');
   assert.equal(ratioStatus(40, 30), 'bad');
+});
+
+test('analyse des ventes : 4 familles et ratio pondéré', () => {
+  const res = menuEngineering([
+    { id: 'burger', qty: 300, margin: 9, cost: 4, sellHT: 13 }, // populaire, marge haute
+    { id: 'frites', qty: 250, margin: 3, cost: 0.5, sellHT: 3.5 }, // populaire, marge basse
+    { id: 'tartare', qty: 20, margin: 12, cost: 6, sellHT: 18 }, // peu vendu, marge haute
+    { id: 'salade', qty: 10, margin: 4, cost: 3, sellHT: 7 }, // peu vendu, marge basse
+    { id: 'jamais', qty: 0, margin: 10, cost: 1, sellHT: 11 },
+  ]);
+  const k = Object.fromEntries(res.rows.map((r) => [r.id, r.klass]));
+  assert.deepEqual(k, { burger: 'star', frites: 'plowhorse', tartare: 'puzzle', salade: 'dog' });
+  assert.equal(res.rows[0].id, 'burger');
+  assert.equal(res.totalQty, 580);
+  close(res.totalMargin, 300 * 9 + 250 * 3 + 20 * 12 + 10 * 4);
+  close(res.ratio, ((300 * 4 + 250 * 0.5 + 20 * 6 + 10 * 3) / (300 * 13 + 250 * 3.5 + 20 * 18 + 10 * 7)) * 100);
 });

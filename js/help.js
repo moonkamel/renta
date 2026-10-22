@@ -26,6 +26,12 @@ export const HELP = {
     body: `<p>Ici vous choisissez vos <b>objectifs</b> : quelle part du prix de vente les ingrédients doivent représenter au maximum. Ces valeurs servent pour toutes les fiches (sauf si vous les changez dans une fiche).</p>
       <p>Pensez aussi à <b>sauvegarder</b> vos données : elles sont uniquement sur ce téléphone.</p>`,
   },
+  'ecran-ventes': {
+    title: 'Les ventes, à quoi ça sert ?',
+    body: `<p>Vous indiquez combien de fois chaque plat ou boisson s’est vendu sur une période (un mois, une semaine). Le plus simple : recopier le rapport des ventes de votre caisse.</p>
+      <p>L’appli calcule alors ce que chaque fiche vous a <b>vraiment rapporté au total</b>, et classe votre carte en 4 familles pour savoir quoi garder, quoi pousser et quoi retirer.</p>
+      <p>Le ratio d’un plat seul ne dit pas tout : c’est la quantité vendue qui fait l’argent.</p>`,
+  },
   'ecran-produit': {
     title: 'Remplir un produit',
     body: `<p>Recopiez simplement votre facture ou l’étiquette :</p>
@@ -116,6 +122,28 @@ export const HELP = {
       <p>Exemple : 18 000 € de charges pour 3 000 couverts → <b>6 € par portion</b>.</p>
       <p>Si vous remplissez ce champ, l’appli affiche aussi la <b>marge nette</b> (ce qu’il reste vraiment).</p>`,
   },
+  'ventes-pourquoi': {
+    title: 'Pourquoi compter les ventes ?',
+    body: `<p>La part des ingrédients (ratio) dit si <b>une portion</b> est bien vendue. Mais l’argent qui rentre dépend surtout du <b>nombre de portions vendues</b>.</p>
+      <p>Exemple sur un mois :</p>
+      <ul><li>Un cocktail à <b>18 %</b> (très bon ratio), vendu 9 €, laisse environ 6 € par verre. Vendu <b>3 fois</b> → environ <b>18 €</b> gagnés.</li>
+      <li>Un plat à <b>32 %</b> (ratio moins bon), vendu 15 €, laisse environ 9 € par assiette. Vendu <b>300 fois</b> → environ <b>2 780 €</b> gagnés.</li></ul>
+      <p>Le plat « moins rentable » rapporte en réalité <b>150 fois plus</b>. Avant de retirer ou de modifier un plat, regardez donc combien il se vend et ce qu’il rapporte au total.</p>`,
+  },
+  classement: {
+    title: 'Les 4 familles de la carte',
+    body: `<p>Chaque fiche est comparée aux autres de la même catégorie (cuisine ou bar) selon deux questions : <b>se vend-elle beaucoup ?</b> et <b>rapporte-t-elle beaucoup par portion ?</b></p>
+      <ul><li><b>Star</b> : se vend bien et rapporte bien. Ne changez rien, mettez-la en valeur.</li>
+      <li><b>Locomotive</b> : se vend bien mais rapporte peu par portion. Augmentez un peu le prix ou réduisez le coût, sans toucher à ce qui plaît.</li>
+      <li><b>Pépite</b> : rapporte bien mais se vend peu. Mettez-la en avant : ardoise, suggestion du serveur, meilleure place sur la carte.</li>
+      <li><b>Poids mort</b> : se vend peu et rapporte peu. À retravailler ou à retirer.</li></ul>
+      <p><small>« Se vend bien » = au moins 70 % des ventes moyennes d’une fiche. « Rapporte bien » = marge par portion au-dessus de la moyenne.</small></p>`,
+  },
+  'ratio-reel': {
+    title: 'La part des ingrédients réelle',
+    body: `<p>C’est la part des ingrédients sur <b>tout ce que vous avez vendu</b> pendant la période, et non la moyenne de vos fiches.</p>
+      <p>Les fiches qui se vendent beaucoup comptent beaucoup, celles qui se vendent peu comptent peu. C’est le chiffre qui correspond à votre vrai coût matière.</p>`,
+  },
   'code-barres': {
     title: 'Le code-barres',
     body: `<p>Scannez le code-barres de l’emballage avec l’appareil photo du téléphone.</p>
@@ -126,4 +154,4 @@ export const HELP = {
 };
 
 // Ordre du lexique sur la page d'aide.
-export const GLOSSARY = ['ht', 'tva', 'ratio', 'objectif', 'prix-conseille', 'marge', 'coef', 'rendement', 'portions', 'preparation', 'charges', 'code-barres'];
+export const GLOSSARY = ['ventes-pourquoi', 'classement', 'ratio-reel', 'ht', 'tva', 'ratio', 'objectif', 'prix-conseille', 'marge', 'coef', 'rendement', 'portions', 'preparation', 'charges', 'code-barres'];

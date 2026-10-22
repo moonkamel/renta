@@ -158,3 +158,46 @@ export function ratioStatus(ratio, target) {
   if (ratio <= target + 5) return 'warn';
   return 'bad';
 }
+
+// Analyse des ventes (méthode « menu engineering ») sur une période.
+// items : [{ id, qty, margin (marge brute HT par portion), cost, sellHT }]
+// Un plat est « populaire » s'il se vend au moins à 70 % de la moyenne,
+// et « rentable » si sa marge par portion dépasse la marge moyenne pondérée.
+export const POPULARITY_FACTOR = 0.7;
+
+export function menuEngineering(items) {
+  const sold = items.filter((it) => it.qty > 0 && Number.isFinite(it.margin));
+  const totalQty = sold.reduce((s, it) => s + it.qty, 0);
+  const totalMargin = sold.reduce((s, it) => s + it.qty * it.margin, 0);
+  const totalRevenue = sold.reduce((s, it) => s + it.qty * it.sellHT, 0);
+  const totalCost = sold.reduce((s, it) => s + it.qty * it.cost, 0);
+  const avgMargin = totalQty ? totalMargin / totalQty : NaN;
+  const popThreshold = sold.length ? (totalQty / sold.length) * POPULARITY_FACTOR : NaN;
+  const rows = sold
+    .map((it) => {
+      const popular = it.qty >= popThreshold;
+      const profitable = it.margin >= avgMargin;
+      const klass = popular ? (profitable ? 'star' : 'plowhorse') : profitable ? 'puzzle' : 'dog';
+      return {
+        ...it,
+        totalMargin: it.qty * it.margin,
+        share: totalMargin > 0 ? (it.qty * it.margin) / totalMargin : 0,
+        mix: totalQty ? it.qty / totalQty : 0,
+        popular,
+        profitable,
+        klass,
+      };
+    })
+    .sort((a, b) => b.totalMargin - a.totalMargin);
+  return {
+    rows,
+    totalQty,
+    totalMargin,
+    totalRevenue,
+    totalCost,
+    // Ratio réel de la période : pondéré par les quantités vendues.
+    ratio: totalRevenue > 0 ? (totalCost / totalRevenue) * 100 : NaN,
+    avgMargin,
+    popThreshold,
+  };
+}

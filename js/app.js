@@ -9,6 +9,7 @@ import {
   recipesUsing,
   pricing,
   ratioStatus,
+  menuEngineering,
 } from './calc.js';
 import * as store from './store.js';
 import { db } from './store.js';
@@ -224,7 +225,8 @@ const routes = [
   [/^#\/fiche\/([\w-]+)$/, viewRecipe, 'detail'],
   [/^#\/produits$/, viewProducts, 'main'],
   [/^#\/produit\/([\w-]+)$/, viewProduct, 'detail'],
-  [/^#\/calcul$/, viewCalculator, 'main'],
+  [/^#\/ventes$/, viewSales, 'main'],
+  [/^#\/calcul$/, viewCalculator, 'detail'],
   [/^#\/reglages$/, viewSettings, 'main'],
   [/^#\/aide$/, viewGuide, 'detail'],
 ];
@@ -676,7 +678,8 @@ function viewRecipe(id, params) {
           <div class="line"><span>Marge brute par portion ${helpBtn('marge')}</span><b>${money(p.margin)}</b></div>
           ${overhead ? `<div class="line"><span>Marge nette par portion ${helpBtn('charges')}</span><b class="${p.netMargin < 0 ? 'bad-text' : ''}">${money(p.netMargin)}</b></div>` : ''}
           <div class="line"><span>Coefficient ${helpBtn('coef')}</span><b>${coef(p.coef)}</b></div>
-        </div>`;
+        </div>
+        ${recipeSalesLine(recipe)}`;
     } else if (!a.cost.errors) {
       html += `<p class="hint center">Indiquez votre prix de vente à l’étape 3 pour savoir si ce ${drink ? 'cocktail' : 'plat'} est rentable.</p>`;
     }
@@ -1264,7 +1267,7 @@ function viewProduct(id, params) {
 const calcState = { cost: '', target: '', vat: '', sell: '' };
 
 function viewCalculator() {
-  setHeader('Calcul rapide', { help: 'ecran-calcul' });
+  setHeader('Calcul rapide', { back: true, help: 'ecran-calcul' });
   const s = db.settings;
   $app.innerHTML = `
     <p class="intro">Un calcul express, sans créer de fiche.</p>
@@ -1348,6 +1351,412 @@ function viewCalculator() {
   });
 }
 
+// ---------- Ventes et classement de la carte ----------
+
+const FAMILY = {
+  star: {
+    label: 'Star',
+    advice: 'Se vend bien et rapporte bien. Ne changez rien, mettez-la en valeur.',
+  },
+  plowhorse: {
+    label: 'Locomotive',
+    advice: 'Se vend bien mais rapporte peu par portion. Augmentez un peu le prix ou réduisez le coût.',
+  },
+  puzzle: {
+    label: 'Pépite',
+    advice: 'Rapporte bien mais se vend peu. Mettez-la en avant (ardoise, conseil du serveur).',
+  },
+  dog: {
+    label: 'Poids mort',
+    advice: 'Se vend peu et rapporte peu. À retravailler ou à retirer de la carte.',
+  },
+};
+
+const famTag = (k) => `<span class="fam ${k}">${k === 'star' ? icons.star : ''}${FAMILY[k].label}</span>`;
+
+let salesTab = 'saisie';
+let salesKind = null;
+let salesPeriodId = null;
+
+const isSellable = (r) => num(r.sellTTC) > 0;
+
+function currentPeriod() {
+  return store.getSalesPeriod(salesPeriodId) || db.sales.at(-1) || null;
+}
+
+// Données d'analyse d'une période pour une catégorie ('food', 'drink' ou 'all').
+function salesAnalysis(period, kind) {
+  const items = db.recipes
+    .filter((r) => isSellable(r) && (kind === 'all' || (kind === 'drink') === (r.kind === 'drink')))
+    .map((r) => {
+      const a = analyse(r);
+      return {
+        id: r.id,
+        recipe: r,
+        qty: num(period?.counts?.[r.id]) || 0,
+        margin: a.price.margin,
+        cost: a.price.cost,
+        sellHT: a.price.sellHT,
+        ratio: a.price.ratio,
+      };
+    });
+  return menuEngineering(items);
+}
+
+// Exemple général : un cocktail très rentable mais peu vendu contre un plat moins rentable mais très vendu.
+function whyCard(rows = []) {
+  const cocktail = pricing({ cost: 0.18 * (9 / 1.2), vat: 20, sellTTC: 9 });
+  const plat = pricing({ cost: 0.32 * (15 / 1.1), vat: 10, sellTTC: 15 });
+  // Exemple tiré des vraies ventes : une fiche au meilleur ratio qui rapporte pourtant moins.
+  let mine = null;
+  for (const a of rows) {
+    for (const b of rows) {
+      if (a.ratio < b.ratio && a.totalMargin < b.totalMargin) {
+        const gap = b.totalMargin - a.totalMargin;
+        if (!mine || gap > mine.gap) mine = { a, b, gap };
+      }
+    }
+  }
+  return `
+    <div class="why card">
+      <h3>Le ratio ne dit pas tout ${helpBtn('ventes-pourquoi')}</h3>
+      <p>Ce qui compte, c’est ce qu’un plat <b>rapporte au total</b> : sa marge par portion <b>multipliée par le nombre de ventes</b>.</p>
+      <div class="vs">
+        <div class="vs-card">
+          <span class="kind drink">${icons.glass}</span>
+          <b>Cocktail</b>
+          <span class="pill good">Ratio <b>18 %</b></span>
+          <small>vendu 3 fois</small>
+          <small>3 × ${money(cocktail.margin)}</small>
+          <strong>${money(3 * cocktail.margin)}</strong>
+        </div>
+        <div class="vs-mid">contre</div>
+        <div class="vs-card win">
+          <span class="kind food">${icons.plate}</span>
+          <b>Plat</b>
+          <span class="pill warn">Ratio <b>32 %</b></span>
+          <small>vendu 300 fois</small>
+          <small>300 × ${money(plat.margin)}</small>
+          <strong>${money(300 * plat.margin)}</strong>
+        </div>
+      </div>
+      <p class="why-end">Le cocktail a le meilleur ratio, mais c’est le plat qui fait gagner de l’argent : <b>${Math.round((300 * plat.margin) / (3 * cocktail.margin))} fois plus</b> sur le mois.</p>
+      ${
+        mine
+          ? `<p class="why-mine"><b>Chez vous :</b> « ${esc(mine.a.recipe.name)} » a un meilleur ratio (${pct(mine.a.ratio)}) que « ${esc(mine.b.recipe.name)} » (${pct(mine.b.ratio)}), mais ${esc(mine.b.recipe.name)} vous a rapporté <b>${money(mine.b.totalMargin)}</b> contre <b>${money(mine.a.totalMargin)}</b>, car vendu ${fmt(mine.b.qty)} fois contre ${fmt(mine.a.qty)}.</p>`
+          : ''
+      }
+    </div>`;
+}
+
+function viewSales() {
+  const period = currentPeriod();
+  setHeader('Mes ventes', {
+    help: 'ecran-ventes',
+    menu: period ? () => periodMenu(period) : null,
+  });
+
+  const sellable = db.recipes.filter(isSellable);
+  if (!sellable.length || !period) {
+    $app.innerHTML = `
+      <div class="empty">
+        <div class="empty-ico">${icons.ventes}</div>
+        <h2>Ce que votre carte rapporte vraiment</h2>
+        <p>Indiquez combien de fois chaque plat ou boisson s’est vendu sur un mois : l’appli vous montre ce que chacun rapporte au total et quoi garder, pousser ou retirer.</p>
+      </div>
+      ${whyCard()}
+      ${
+        sellable.length
+          ? `<button class="btn primary block big" data-start-sales>${icons.plus} Saisir mes ventes</button>`
+          : `<p class="tip">Il faut d’abord des fiches avec un <b>prix de vente</b> (étape 3 d’une fiche).</p>
+             <a class="btn primary block big" href="#/fiches">Aller à mes fiches</a>`
+      }`;
+    $app.querySelector('[data-start-sales]')?.addEventListener('click', () => {
+      salesPeriodId = store.createSalesPeriod().id;
+      salesTab = 'saisie';
+      render();
+    });
+    return;
+  }
+
+  const kinds = ['food', 'drink'].filter((k) => sellable.some((r) => (k === 'drink') === (r.kind === 'drink')));
+  if (!salesKind || (salesKind !== 'all' && !kinds.includes(salesKind))) salesKind = kinds[0];
+
+  $app.innerHTML = `
+    <div class="period-bar">
+      <label class="lbl" for="period">Période</label>
+      <div class="with-btn">
+        <select id="period" aria-label="Choisir la période">
+          ${db.sales.map((p) => `<option value="${p.id}" ${p.id === period.id ? 'selected' : ''}>${esc(p.label)}</option>`).join('')}
+        </select>
+        <button class="btn" data-new-period aria-label="Nouvelle période">${icons.plus}</button>
+      </div>
+    </div>
+    <div class="seg big-seg" role="tablist">
+      <button data-tab="saisie" class="${salesTab === 'saisie' ? 'on' : ''}" role="tab"><span class="step-n">1</span>Saisir les ventes</button>
+      <button data-tab="analyse" class="${salesTab === 'analyse' ? 'on' : ''}" role="tab"><span class="step-n">2</span>Voir l’analyse</button>
+    </div>
+    <div id="sales-body"></div>`;
+
+  const body = $app.querySelector('#sales-body');
+  if (salesTab === 'saisie') drawSalesInput(body, period, sellable);
+  else drawSalesAnalysis(body, period, kinds);
+
+  $app.querySelector('#period').onchange = (e) => {
+    salesPeriodId = e.target.value;
+    render();
+  };
+  $app.querySelector('[data-new-period]').onclick = () => newPeriod();
+  $app.querySelectorAll('[data-tab]').forEach(
+    (b) =>
+      (b.onclick = () => {
+        if (salesTab === b.dataset.tab) return;
+        salesTab = b.dataset.tab;
+        transition(() => render());
+      }),
+  );
+}
+
+function drawSalesInput(body, period, sellable) {
+  const unpriced = db.recipes.length - sellable.length;
+  const group = (kind, title, icon) => {
+    const list = sellable.filter((r) => (kind === 'drink') === (r.kind === 'drink')).sort(byName);
+    if (!list.length) return '';
+    return `
+      <h2 class="step-title small-title">${icon} ${title}</h2>
+      <ul class="cards">${list
+        .map((r) => {
+          const a = analyse(r);
+          const q = num(period.counts[r.id]);
+          return `
+          <li class="sale-row" data-id="${r.id}">
+            <div class="row-main">
+              <div class="row-title">${esc(r.name || 'Sans nom')}</div>
+              <div class="row-sub">Marge <b>${money(a.price.margin)}</b> par portion</div>
+              <div class="sale-total" data-total="${r.id}">${q > 0 ? `= ${money(q * a.price.margin)} gagnés` : ''}</div>
+            </div>
+            <div class="stepper">
+              <button data-dec="${r.id}" aria-label="Une vente de moins">−</button>
+              <input data-count="${r.id}" inputmode="numeric" placeholder="0" value="${q > 0 ? fmt(q) : ''}" aria-label="Nombre de ventes" />
+              <button data-inc="${r.id}" aria-label="Une vente de plus">+</button>
+            </div>
+          </li>`;
+        })
+        .join('')}</ul>`;
+  };
+  body.innerHTML = `
+    <p class="step-help">Combien de fois chaque fiche a été vendue sur <b>${esc(period.label)}</b> ? Recopiez le rapport des ventes de votre caisse.</p>
+    ${group('food', 'Cuisine', icons.plate)}
+    ${group('drink', 'Bar', icons.glass)}
+    ${unpriced > 0 ? `<p class="fine">${plural(unpriced, 'fiche')} sans prix de vente (sauces, préparations…) ${unpriced > 1 ? 'ne sont' : 'n’est'} pas ${unpriced > 1 ? 'listées' : 'listée'}.</p>` : ''}
+    <div class="dock in-main" id="sales-dock"></div>`;
+
+  const drawDock = () => {
+    const res = salesAnalysis(period, 'all');
+    body.querySelector('#sales-dock').innerHTML = `
+      <div class="dock-info"><span>${plural(res.totalQty, 'vente')}</span><b>${money(res.totalMargin)}</b></div>
+      <button class="btn primary" data-go-analyse>Voir l’analyse ${icons.chevron}</button>`;
+  };
+  drawDock();
+
+  const setCount = (id, value) => {
+    const v = Math.max(0, Math.round(num(value)) || 0);
+    if (v > 0) period.counts[id] = v;
+    else delete period.counts[id];
+    store.save();
+    const r = store.getRecipe(id);
+    const m = analyse(r).price.margin;
+    body.querySelector(`[data-total="${id}"]`).textContent = v > 0 ? `= ${money(v * m)} gagnés` : '';
+    drawDock();
+    return v;
+  };
+  body.addEventListener('input', (e) => {
+    const id = e.target.dataset.count;
+    if (id) setCount(id, e.target.value);
+  });
+  body.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.target.tagName === 'INPUT') e.target.blur();
+  });
+  body.addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    if (b.hasAttribute('data-go-analyse')) {
+      salesTab = 'analyse';
+      transition(() => render());
+      return;
+    }
+    const id = b.dataset.inc || b.dataset.dec;
+    if (!id) return;
+    const input = body.querySelector(`[data-count="${id}"]`);
+    const v = setCount(id, (num(input.value) || 0) + (b.dataset.inc ? 1 : -1));
+    input.value = v > 0 ? fmt(v) : '';
+  });
+}
+
+function drawSalesAnalysis(body, period, kinds) {
+  const res = salesAnalysis(period, salesKind);
+  const chips = [...kinds.map((k) => [k, k === 'drink' ? 'Bar' : 'Cuisine']), ...(kinds.length > 1 ? [['all', 'Tout']] : [])];
+  let html = `
+    <div class="chips">${chips.map(([k, l]) => `<button class="chip ${salesKind === k ? 'on' : ''}" data-kind-filter="${k}">${l}</button>`).join('')}</div>
+    ${salesKind === 'all' ? '<p class="step-help">Conseil : pour le classement, comparez plutôt la cuisine et le bar séparément.</p>' : ''}`;
+
+  if (res.rows.length < 2) {
+    html += `
+      <div class="card center">
+        <p><b>Pas encore assez de ventes</b></p>
+        <p class="hint">Saisissez les ventes d’au moins 2 fiches ${salesKind === 'drink' ? 'du bar' : salesKind === 'food' ? 'de cuisine' : ''} dans l’onglet « Saisir les ventes ».</p>
+      </div>
+      ${whyCard()}`;
+    body.innerHTML = html;
+    bindKind();
+    return;
+  }
+
+  const byClass = (k) => res.rows.filter((r) => r.klass === k);
+  const quad = (k) => {
+    const list = byClass(k);
+    return `
+      <div class="quad ${k}">
+        <div class="quad-head">${famTag(k)}<b>${list.length}</b></div>
+        <ul>${list
+          .slice(0, 4)
+          .map((r) => `<li><a href="#/fiche/${r.id}">${esc(r.recipe.name || 'Sans nom')}</a></li>`)
+          .join('')}${list.length > 4 ? `<li class="muted">et ${list.length - 4} autre${list.length > 5 ? 's' : ''}</li>` : ''}</ul>
+      </div>`;
+  };
+  const best = res.rows[0];
+
+  html += `
+    <section class="totals card">
+      <div class="totals-main"><span>Marge brute gagnée ${helpBtn('marge')}</span><b>${money(res.totalMargin)}</b>
+        <small>sur ${esc(period.label)}, avec ${plural(res.totalQty, 'vente')}</small></div>
+      <div class="kpis">
+        <div class="kpi"><span>Chiffre d’affaires HT</span><b>${money(res.totalRevenue)}</b></div>
+        <div class="kpi"><span>Part des ingrédients réelle ${helpBtn('ratio-reel')}</span><b>${pct(res.ratio)}</b></div>
+      </div>
+      <p class="hint">Votre meilleure source de marge : <b>${esc(best.recipe.name)}</b>, ${pct(best.share * 100)} de la marge à elle seule.</p>
+    </section>
+
+    ${whyCard(res.rows)}
+
+    <section class="step">
+      <h2 class="step-title">Le classement de votre carte ${helpBtn('classement')}</h2>
+      <p class="step-help">Chaque fiche est placée selon ce qu’elle vend et ce qu’elle rapporte par portion.</p>
+      <div class="matrix">
+        <div class="axis-y"><span>Rapporte plus ↑</span></div>
+        <div class="quads">
+          ${quad('puzzle')}${quad('star')}
+          ${quad('dog')}${quad('plowhorse')}
+        </div>
+        <div class="axis-x"><span>← Se vend peu</span><span>Se vend beaucoup →</span></div>
+      </div>
+    </section>
+
+    <section class="step">
+      <h2 class="step-title">Ce que chaque fiche vous rapporte</h2>
+      <p class="step-help">Classées de celle qui rapporte le plus à celle qui rapporte le moins. Touchez une fiche pour l’ouvrir.</p>
+      <ul class="cards">${res.rows
+        .map(
+          (r, i) => `
+        <li><a class="rank card-row" href="#/fiche/${r.id}">
+          <span class="rank-n">${i + 1}</span>
+          <div class="row-main">
+            <div class="rank-head"><span class="row-title">${esc(r.recipe.name || 'Sans nom')}</span><b>${money(r.totalMargin)}</b></div>
+            <div class="rank-bar"><span class="${r.klass}" style="width:${Math.max(2, r.share * 100)}%"></span></div>
+            <div class="row-sub">${fmt(r.qty)} vente${r.qty > 1 ? 's' : ''} × ${money(r.margin)} · ratio ${pct(r.ratio)}</div>
+            <div class="rank-foot">${famTag(r.klass)}<span>${FAMILY[r.klass].advice}</span></div>
+          </div>
+        </a></li>`,
+        )
+        .join('')}</ul>
+      ${
+        res.rows.length < db.recipes.filter((r) => isSellable(r) && (salesKind === 'all' || (salesKind === 'drink') === (r.kind === 'drink'))).length
+          ? '<p class="fine">Les fiches sans vente sur la période ne sont pas classées.</p>'
+          : ''
+      }
+      <p class="fine">Calculé avec les coûts et les prix actuels de vos fiches.</p>
+    </section>`;
+  body.innerHTML = html;
+  bindKind();
+
+  function bindKind() {
+    body.querySelectorAll('[data-kind-filter]').forEach(
+      (b) =>
+        (b.onclick = () => {
+          salesKind = b.dataset.kindFilter;
+          render({ restoreScroll: true });
+        }),
+    );
+  }
+}
+
+function newPeriod() {
+  const s = sheet(`
+    <h3>Nouvelle période</h3>
+    <p class="sheet-text">Donnez-lui un nom (un mois, une semaine, une saison…).</p>
+    <input name="label" autocomplete="off" placeholder="Vide = le mois en cours" />
+    <button class="btn primary block" data-ok>Créer</button>
+    <button class="btn ghost block" data-sheet-close>Annuler</button>`);
+  const input = s.el.querySelector('input');
+  s.el.querySelector('[data-ok]').onclick = () => {
+    const p = store.createSalesPeriod(input.value.trim());
+    salesPeriodId = p.id;
+    salesTab = 'saisie';
+    s.close();
+    render();
+    toast(`Période « ${p.label} » créée`);
+  };
+}
+
+function periodMenu(period) {
+  const s = sheet(`
+    <h3>${esc(period.label)}</h3>
+    <label class="lbl" for="period-name">Nom de la période</label>
+    <input id="period-name" autocomplete="off" value="${esc(period.label)}" />
+    <button class="btn primary block" data-rename>Enregistrer le nom</button>
+    <button class="menu-item danger" data-del>${icons.trash}<span>Supprimer cette période<small>Les fiches ne sont pas touchées</small></span></button>
+    <button class="btn ghost block" data-sheet-close>Fermer</button>`);
+  s.el.querySelector('[data-rename]').onclick = () => {
+    const v = s.el.querySelector('input').value.trim();
+    if (v) {
+      period.label = v;
+      store.save();
+    }
+    s.close();
+    render();
+  };
+  s.el.querySelector('[data-del]').onclick = async () => {
+    s.close();
+    const ok = await confirmSheet({
+      title: `Supprimer « ${period.label} » ?`,
+      text: 'Les ventes saisies pour cette période seront effacées.',
+      ok: 'Supprimer',
+      danger: true,
+    });
+    if (ok) {
+      store.deleteSalesPeriod(period.id);
+      salesPeriodId = null;
+      render();
+      toast('Période supprimée');
+    }
+  };
+}
+
+// Ligne « ventes » affichée dans le résultat d'une fiche.
+function recipeSalesLine(recipe) {
+  const period = db.sales.at(-1);
+  const qty = num(period?.counts?.[recipe.id]);
+  if (!(qty > 0)) return '';
+  const res = salesAnalysis(period, recipe.kind === 'drink' ? 'drink' : 'food');
+  const row = res.rows.find((r) => r.id === recipe.id);
+  if (!row) return '';
+  return `
+    <div class="sales-line">
+      <div class="sales-box"><span>Ventes de ${esc(period.label)}</span><b>${money(row.totalMargin)} gagnés</b><small>${plural(qty, 'vente')} × ${money(row.margin)} de marge</small></div>
+      ${res.rows.length > 1 ? `<p class="rank-foot">${famTag(row.klass)}<span>${FAMILY[row.klass].advice}</span></p>` : ''}
+    </div>`;
+}
+
 // ---------- Réglages ----------
 
 function viewSettings() {
@@ -1358,6 +1767,11 @@ function viewSettings() {
     <a class="guide-link" href="#/aide">
       <span class="kind">${icons.book}</span>
       <span><b>Guide d’utilisation</b><small>Comment ça marche, et le sens de chaque mot</small></span>
+      <span class="chev">${icons.chevron}</span>
+    </a>
+    <a class="guide-link" href="#/calcul">
+      <span class="kind">${icons.calcul}</span>
+      <span><b>Calcul rapide</b><small>Trouver un prix de vente sans créer de fiche</small></span>
       <span class="chev">${icons.chevron}</span>
     </a>
 
@@ -1506,11 +1920,12 @@ function viewGuide() {
   $app.innerHTML = `
     <div class="tiles-band" aria-hidden="true"></div>
     <section class="step">
-      <h2 class="step-title">En 3 étapes</h2>
+      <h2 class="step-title">En 4 étapes</h2>
       <ol class="steps card">
         <li><span class="step-n">1</span><div><b>Produits</b><p>Enregistrez ce que vous achetez avec le prix de la facture (HT) et la quantité. Scannez le code-barres quand il y en a un.</p></div></li>
         <li><span class="step-n">2</span><div><b>Fiches</b><p>Pour chaque plat ou cocktail, ajoutez les produits et les quantités utilisées. Indiquez combien de portions ça donne.</p></div></li>
         <li><span class="step-n">3</span><div><b>Prix</b><p>L’appli calcule le coût d’une portion et propose un prix. Mettez votre prix de carte : la pastille devient verte si c’est rentable.</p></div></li>
+        <li><span class="step-n">4</span><div><b>Ventes</b><p>Chaque mois, recopiez combien de fois chaque fiche s’est vendue. Vous voyez ce que chacune rapporte vraiment et quoi garder, pousser ou retirer.</p></div></li>
       </ol>
     </section>
     <section class="step">
