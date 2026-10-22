@@ -1,6 +1,6 @@
-# Renta — rentabilité cuisine & bar
+# Le Ici — rentabilité cuisine & bar
 
-Application pour téléphone qui calcule le **coût matière**, le **prix de revient** et le **prix de vente conseillé** de vos plats et cocktails.
+Application pour téléphone, aux couleurs du Ici (store rouge, moutarde, bois et carreaux de ciment), qui calcule le **coût matière**, le **prix de revient** et le **prix de vente conseillé** de vos plats et cocktails.
 
 ## Ce que fait l'appli
 
@@ -13,6 +13,7 @@ Application pour téléphone qui calcule le **coût matière**, le **prix de rev
   - **Préparations maison** : une fiche (sauce, fond, sirop…) peut servir d'ingrédient dans une autre.
   - **Prix conseillé TTC** selon votre ratio matière visé (30 % cuisine, 22 % bar par défaut) et la TVA (10 % / 20 %).
   - Avec votre prix de vente : **ratio matière**, **marge brute**, **coefficient**, et un code couleur vert / orange / rouge.
+- **Pensée pour les débutants** : écran d'accueil qui explique le fonctionnement, étapes numérotées sur chaque écran, boutons « ? » qui expliquent chaque mot (HT/TTC, ratio matière, marge, coefficient, rendement…) et un guide complet dans *Réglages*.
 - **Calcul rapide** : prix conseillé à partir d'un coût, sans créer de fiche.
 - **Réglages** : objectifs, TVA, arrondi des prix, charges par portion (pour le prix de revient complet et la marge nette), sauvegarde / restauration.
 
@@ -59,4 +60,7 @@ npm test    # tests du moteur de calcul
 - `js/store.js` — stockage local et données d'exemple
 - `js/scanner.js` — scan (BarcodeDetector natif, ou ZXing dans `vendor/` sur iPhone) et Open Food Facts
 - `js/app.js` — écrans
+- `js/help.js` — textes d'aide et lexique
+- `js/icons.js` — icônes
+- `fonts/` — police DM Serif Display (licence OFL)
 - `sw.js` — fonctionnement hors ligne

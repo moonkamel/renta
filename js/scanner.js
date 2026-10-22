@@ -1,3 +1,5 @@
+import { icons } from './icons.js';
+
 // Lecture de codes-barres avec la caméra du téléphone.
 // Utilise l'API native BarcodeDetector (Android/Chrome) et, à défaut (iPhone),
 // la bibliothèque ZXing embarquée dans /vendor.
@@ -83,17 +85,18 @@ export function scanBarcode({ title = 'Scanner un code-barres' } = {}) {
     overlay.className = 'scanner';
     overlay.innerHTML = `
       <div class="scanner-top">
-        <button class="icon-btn light" data-close aria-label="Fermer">✕</button>
+        <button class="hdr-btn" data-close aria-label="Fermer le scanner">${icons.close}</button>
         <span>${title}</span>
-        <button class="icon-btn light" data-torch aria-label="Lampe" hidden>💡</button>
+        <button class="hdr-btn" data-torch aria-label="Allumer la lampe" hidden>${icons.light}</button>
       </div>
       <div class="scanner-view">
         <video playsinline muted autoplay></video>
+        <p class="scanner-tips">Tenez le téléphone à 15 cm environ, code-barres à l’horizontale.</p>
         <div class="scanner-frame"><div class="scanner-line"></div></div>
-        <p class="scanner-msg">Placez le code-barres dans le cadre</p>
+        <p class="scanner-msg">Ouverture de la caméra…</p>
       </div>
       <form class="scanner-manual">
-        <input name="code" inputmode="numeric" autocomplete="off" placeholder="…ou tapez le code" />
+        <input name="code" inputmode="numeric" autocomplete="off" placeholder="Ou tapez les chiffres du code" aria-label="Code-barres" />
         <button class="btn primary" type="submit">OK</button>
       </form>`;
     document.body.appendChild(overlay);
@@ -137,7 +140,7 @@ export function scanBarcode({ title = 'Scanner un code-barres' } = {}) {
 
     (async () => {
       if (!navigator.mediaDevices?.getUserMedia) {
-        msg.textContent = 'Caméra indisponible ici. Saisissez le code à la main.';
+        msg.textContent = 'Caméra indisponible ici. Tapez le code en bas.';
         return;
       }
       try {
@@ -146,7 +149,7 @@ export function scanBarcode({ title = 'Scanner un code-barres' } = {}) {
           audio: false,
         });
       } catch {
-        msg.textContent = 'Accès à la caméra refusé. Autorisez-le dans les réglages, ou tapez le code.';
+        msg.textContent = 'L’appli n’a pas accès à la caméra. Autorisez-la dans les réglages du téléphone, ou tapez le code en bas.';
         return;
       }
       if (done) {
@@ -155,6 +158,7 @@ export function scanBarcode({ title = 'Scanner un code-barres' } = {}) {
       }
       video.srcObject = stream;
       await video.play().catch(() => {});
+      msg.textContent = 'Placez le code-barres dans le cadre';
       const caps = stream.getVideoTracks()[0]?.getCapabilities?.();
       if (caps?.torch) torchBtn.hidden = false;
 

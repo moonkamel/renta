@@ -1,5 +1,5 @@
 // Service worker : l'appli fonctionne hors connexion (cuisine, cave, réserve…).
-const CACHE = 'renta-v1';
+const CACHE = 'renta-v2';
 const ASSETS = [
   './',
   'index.html',
@@ -8,6 +8,9 @@ const ASSETS = [
   'js/calc.js',
   'js/store.js',
   'js/scanner.js',
+  'js/icons.js',
+  'js/help.js',
+  'fonts/dm-serif-display.woff2',
   'vendor/zxing.min.js',
   'manifest.webmanifest',
   'icons/icon.svg',
