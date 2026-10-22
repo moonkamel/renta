@@ -257,6 +257,28 @@ body[data-mode='welcome'] .tabbar {
   pointer-events: none;
 }
 
+/* Morceau de scotch qui tient le sticker au mur */
+.tape {
+  position: absolute;
+  top: -6%;
+  left: 50%;
+  width: 60%;
+  height: 21%;
+  transform: translateX(-50%) rotate(-26deg);
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0.25) 70%, rgba(255, 255, 255, 0)),
+    rgba(247, 240, 220, 0.84);
+  box-shadow: 0 1px 1.5px rgba(43, 29, 21, 0.18);
+  /* bords déchirés */
+  clip-path: polygon(3% 0, 97% 0, 100% 12%, 96% 25%, 100% 38%, 96% 50%, 100% 63%, 96% 75%, 100% 88%, 97% 100%, 3% 100%, 0 88%, 4% 75%, 0 63%, 4% 50%, 0 38%, 4% 25%, 0 12%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.sticker-welcome .tape {
+  transform: translateX(-50%) rotate(24deg);
+}
+
 .sticker-hdr {
   width: 50px;
   margin: 0 2px 0 -10px;
