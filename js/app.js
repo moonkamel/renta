@@ -388,6 +388,7 @@ function viewWelcome() {
     <section class="welcome">
       <div class="welcome-brand">
         <div class="welcome-mark"><div class="welcome-logo">Le Ici</div>${sticker('welcome')}</div>
+        <p class="welcome-slogan">« Faire de la mala 💸 dans la France à Macron »</p>
         <p>Le carnet de rentabilité<br/>de la cuisine et du bar</p>
       </div>
       <div class="tiles-band" aria-hidden="true"></div>
