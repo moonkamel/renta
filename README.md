@@ -1,6 +1,6 @@
 # Le Ici — rentabilité cuisine & bar
 
-Application pour téléphone, aux couleurs du Ici (store rouge, moutarde, bois et carreaux de ciment), qui calcule le **coût matière**, le **prix de revient** et le **prix de vente conseillé** de vos plats et cocktails.
+Application pour téléphone, aux couleurs du Ici (store rouge, moutarde, bois et carreaux de ciment), qui calcule le **coût matière**, le **prix de revient** et la **rentabilité** de vos plats et cocktails, au prix que vous fixez.
 
 ## Ce que fait l'appli
 
@@ -11,12 +11,12 @@ Application pour téléphone, aux couleurs du Ici (store rouge, moutarde, bois e
 - **Fiches techniques** : ingrédients + quantités + nombre de portions.
   - Coût total et **coût par portion**, mis à jour automatiquement quand un prix d'achat change.
   - **Préparations maison** : une fiche (sauce, fond, sirop…) peut servir d'ingrédient dans une autre.
-  - **Prix conseillé TTC** selon votre ratio matière visé (30 % cuisine, 22 % bar par défaut) et la TVA (10 % / 20 %).
+  - **Votre prix de vente** : c'est le restaurateur qui le fixe. L'appli le juge selon le ratio matière visé (30 % cuisine, 22 % bar par défaut) et la TVA (10 % / 20 %).
   - Avec votre prix de vente : **ratio matière**, **marge brute**, **coefficient**, et un code couleur vert / orange / rouge.
 - **Pensée pour les débutants** : écran d'accueil qui explique le fonctionnement, étapes numérotées sur chaque écran, boutons « ? » qui expliquent chaque mot (HT/TTC, ratio matière, marge, coefficient, rendement…) et un guide complet dans *Réglages*.
 - **Ventes** : pour chaque période (un mois, une semaine), on saisit combien de fois chaque fiche s'est vendue. L'appli affiche la marge brute réellement gagnée, la part des ingrédients réelle (pondérée par les ventes), ce que chaque fiche rapporte au total, et classe la carte en 4 familles : Star, Locomotive, Pépite, Poids mort. Une carte explique pourquoi le ratio seul ne suffit pas (un cocktail à 18 % vendu 3 fois rapporte bien moins qu'un plat à 32 % vendu 300 fois).
-- **Calcul rapide** : prix conseillé à partir d'un coût, sans créer de fiche.
-- **Réglages** : objectifs, TVA, arrondi des prix, charges par portion (pour le prix de revient complet et la marge nette), sauvegarde / restauration.
+- **Calcul rapide** : un coût et un prix de carte donnent le verdict, sans créer de fiche.
+- **Réglages** : objectifs, TVA, charges par portion (pour le prix de revient complet et la marge nette), sauvegarde / restauration.
 
 **Partage avec l'équipe** : les données sont stockées dans une base en ligne (Supabase, projet `le-ici`) et synchronisées sur tous les téléphones, sans compte ni mot de passe. Les changements arrivent sur les autres téléphones en quelques secondes. Hors connexion, l'appli continue de marcher et envoie les modifications au retour du réseau. Chaque version est archivée dans la table `items_history`. L'appli peut lire, ajouter et modifier, mais pas supprimer définitivement : une suppression est enregistrée comme `deleted = true`. Sans réseau ni configuration (`js/config.js` vide), l'appli fonctionne seule sur le téléphone.
 
@@ -25,8 +25,7 @@ Application pour téléphone, aux couleurs du Ici (store rouge, moutarde, bois e
 | | |
 |---|---|
 | Coût d'un produit | prix d'achat HT ÷ quantité ÷ rendement |
-| Prix conseillé HT | coût matière ÷ ratio visé |
-| Prix conseillé TTC | prix HT × (1 + TVA) |
+| Prix de vente HT | prix TTC ÷ (1 + TVA) |
 | Ratio matière | coût matière ÷ prix de vente HT |
 | Marge brute | prix de vente HT − coût matière |
 | Coefficient | prix de vente TTC ÷ coût matière |

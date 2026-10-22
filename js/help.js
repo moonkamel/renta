@@ -6,7 +6,7 @@ export const HELP = {
     title: 'Les fiches, c’est quoi ?',
     body: `<p>Une <b>fiche</b> (ou fiche technique), c’est une recette : un plat, un cocktail, une sauce…</p>
       <p>Vous y mettez les ingrédients et leurs quantités. L’appli calcule alors :</p>
-      <ul><li>combien coûte une portion,</li><li>à quel prix la vendre,</li><li>si votre prix actuel est rentable.</li></ul>
+      <ul><li>combien coûte une portion,</li><li>ce qu’il vous reste sur votre prix de vente,</li><li>si ce prix est rentable.</li></ul>
       <p>La pastille de couleur à droite vous dit d’un coup d’œil si le plat est <span class="pill good">Rentable</span>, <span class="pill warn">Limite</span> ou <span class="pill bad">À revoir</span>.</p>`,
   },
   'ecran-produits': {
@@ -18,8 +18,8 @@ export const HELP = {
   },
   'ecran-calcul': {
     title: 'Le calcul rapide',
-    body: `<p>Pour un calcul express sans créer de fiche : vous connaissez déjà le coût des ingrédients d’une portion et vous voulez savoir à combien la vendre.</p>
-      <p>Si vous ajoutez votre prix de vente actuel, l’appli vous dit s’il est rentable.</p>`,
+    body: `<p>Pour un calcul express sans créer de fiche : tapez le coût des ingrédients d’une portion et votre prix de carte.</p>
+      <p>L’appli vous dit si ce prix est rentable et ce qu’il vous reste.</p>`,
   },
   'ecran-reglages': {
     title: 'Les réglages',
@@ -43,7 +43,7 @@ export const HELP = {
     title: 'Remplir une fiche',
     body: `<ol><li><b>La recette</b> : donnez un nom et dites combien de portions elle donne.</li>
       <li><b>Les ingrédients</b> : ajoutez chaque produit avec la quantité utilisée pour <u>toute</u> la recette.</li>
-      <li><b>Le prix</b> : l’appli vous propose un prix. Mettez le vôtre (celui de la carte).</li>
+      <li><b>Le prix</b> : mettez votre prix de carte, c’est vous qui décidez.</li>
       <li><b>Le résultat</b> : vous voyez ce qu’il vous reste une fois les ingrédients payés.</li></ol>
       <p>Tout est enregistré automatiquement, pas besoin de bouton « Enregistrer ».</p>`,
   },
@@ -73,15 +73,9 @@ export const HELP = {
   objectif: {
     title: 'Objectif (ratio visé)',
     body: `<p>C’est la part maximale du prix que vous acceptez de consacrer aux ingrédients.</p>
-      <p>Avec un objectif de <b>30 %</b>, un plat qui coûte 3 € d’ingrédients doit être vendu au moins <b>10 € HT</b> (soit 11 € TTC avec 10 % de TVA).</p>
+      <p>Elle sert à juger votre prix : sous l’objectif, la fiche est <b>Rentable</b> ; au-dessus, elle passe en <b>Limite</b> ou <b>À revoir</b>.</p>
+      <p>Exemple avec 30 % : un plat à 3 € d’ingrédients vendu 11 € TTC (10 € HT) fait pile 30 %.</p>
       <p>Baissez l’objectif si vos charges (personnel, loyer) sont élevées.</p>`,
-  },
-  'prix-conseille': {
-    title: 'Le prix conseillé',
-    body: `<p>C’est le prix de vente minimum pour respecter votre objectif.</p>
-      <p>Calcul : coût des ingrédients ÷ objectif, puis on ajoute la TVA, et on arrondit (réglable dans Réglages).</p>
-      <p>Exemple : 3 € d’ingrédients, objectif 30 % → 10 € HT → <b>11 € TTC</b>.</p>
-      <p>C’est un repère : vous pouvez vendre plus cher si votre clientèle l’accepte.</p>`,
   },
   marge: {
     title: 'Marge brute',
@@ -162,4 +156,4 @@ export const HELP = {
 };
 
 // Ordre du lexique sur la page d'aide.
-export const GLOSSARY = ['partage', 'ventes-pourquoi', 'classement', 'ratio-reel', 'ht', 'tva', 'ratio', 'objectif', 'prix-conseille', 'marge', 'coef', 'rendement', 'portions', 'preparation', 'charges', 'code-barres'];
+export const GLOSSARY = ['partage', 'ventes-pourquoi', 'classement', 'ratio-reel', 'ht', 'tva', 'ratio', 'objectif', 'marge', 'coef', 'rendement', 'portions', 'preparation', 'charges', 'code-barres'];

@@ -163,7 +163,6 @@ function analyse(recipe) {
     vat,
     sellTTC: recipe.sellTTC,
     overhead: db.settings.overhead,
-    roundStep: db.settings.roundStep,
   });
   const status = cost.errors ? 'error' : ratioStatus(price.ratio, target);
   return { cost, price, target, vat, status };
@@ -395,7 +394,7 @@ function viewWelcome() {
       <ol class="steps">
         <li><span class="step-n">1</span><div><b>Enregistrez vos produits</b><p>Ce que vous achetez, avec le prix de la facture. Scannez le code-barres pour aller plus vite.</p></div></li>
         <li><span class="step-n">2</span><div><b>Créez vos fiches</b><p>Pour chaque plat ou cocktail : les ingrédients et leurs quantités.</p></div></li>
-        <li><span class="step-n">3</span><div><b>Fixez le bon prix</b><p>L’appli calcule le coût d’une portion, le prix de vente conseillé et ce qu’il vous reste.</p></div></li>
+        <li><span class="step-n">3</span><div><b>Fixez le bon prix</b><p>Vous mettez votre prix de carte : l’appli calcule le coût d’une portion, ce qu’il vous reste et si c’est rentable.</p></div></li>
       </ol>
       <button class="btn primary block big" data-start>Commencer</button>
       <p class="fine">Vos données restent sur ce téléphone. Aucun compte à créer.</p>
@@ -420,7 +419,7 @@ function viewRecipes() {
       <div class="empty">
         <div class="empty-ico">${icons.fiches}</div>
         <h2>Aucune fiche pour l’instant</h2>
-        <p>Une fiche, c’est une recette (un plat, un cocktail, une sauce…). L’appli calcule ce qu’elle vous coûte et à quel prix la vendre.</p>
+        <p>Une fiche, c’est une recette (un plat, un cocktail, une sauce…). L’appli calcule ce qu’elle vous coûte et si votre prix est rentable.</p>
         ${
           noProducts
             ? `<p class="tip"><b>Conseil :</b> commencez par enregistrer quelques produits (vos achats), ce sera plus rapide pour remplir les fiches.</p>
@@ -495,7 +494,7 @@ function viewRecipes() {
             <div class="row-title">${esc(r.name || 'Sans nom')}</div>
             <div class="row-sub">
               Coût <b>${money(a.price.cost)}</b>
-              ${Number.isFinite(a.price.sellTTC) ? ` · Vendu <b>${money(a.price.sellTTC)}</b>` : Number.isFinite(a.price.roundedTTC) ? ` · Conseillé ${money(a.price.roundedTTC)}` : ''}
+              ${Number.isFinite(a.price.sellTTC) ? ` · Vendu <b>${money(a.price.sellTTC)}</b>` : ' · Prix à fixer'}
             </div>
           </div>
           ${pill(a.status, a.price.ratio)}
@@ -598,8 +597,8 @@ function viewRecipe(id, params) {
 
     <section class="step">
       <h2 class="step-title"><span class="step-n">3</span>Le prix de vente</h2>
+      <p class="step-help">C’est vous qui fixez le prix. L’appli vous dit ensuite s’il est rentable.</p>
       <div class="card">
-        <div id="suggest"></div>
         <label class="lbl" for="r-sell">Votre prix sur la carte (TTC) ${helpBtn('ht', 'HT et TTC')}</label>
         <div class="input-unit big"><input id="r-sell" name="sellTTC" inputmode="decimal" placeholder="0,00" value="${esc(fmt(num(recipe.sellTTC)))}" enterkeyhint="done" /><span>€</span></div>
         <details class="more" ${customized ? 'open' : ''}>
@@ -695,18 +694,6 @@ function viewRecipe(id, params) {
     $app.querySelector('#portions-word').textContent =
       Number.isFinite(portions) && portions > 0 ? `les ${plural(portions, 'portion')}` : 'toutes les portions';
 
-    // Prix conseillé
-    $app.querySelector('#suggest').innerHTML = Number.isFinite(p.roundedTTC)
-      ? `<div class="suggest">
-          <div>
-            <span>Prix conseillé ${helpBtn('prix-conseille')}</span>
-            <b>${money(p.roundedTTC)}</b>
-            <small>minimum pour que les ingrédients fassent ${pct(a.target)} du prix</small>
-          </div>
-          ${Math.abs(num(recipe.sellTTC) - p.roundedTTC) > 0.004 ? `<button class="btn small-btn" data-use-price>Utiliser</button>` : `<span class="ok-tag">${icons.check}</span>`}
-        </div>`
-      : `<p class="hint first">Le prix conseillé apparaîtra quand les ingrédients auront une quantité.</p>`;
-
     // Résultat
     const hasSell = Number.isFinite(p.sellTTC);
     const overhead = num(db.settings.overhead) > 0 ? num(db.settings.overhead) : 0;
@@ -720,16 +707,14 @@ function viewRecipe(id, params) {
         ${
           overhead
             ? `<div class="kpi"><span>Prix de revient ${helpBtn('charges')}</span><b>${money(p.fullCost)}</b><small>avec ${money(overhead)} de charges</small></div>`
-            : portions > 1
-              ? `<div class="kpi"><span>Coût de la recette</span><b>${money(a.cost.total)}</b><small>pour ${plural(portions, 'portion')}</small></div>`
-              : `<div class="kpi"><span>Prix conseillé</span><b>${money(p.roundedTTC)}</b><small>TTC, objectif ${pct(a.target)}</small></div>`
+            : `<div class="kpi"><span>Coût de la recette</span><b>${money(a.cost.total)}</b><small>pour ${plural(portions, 'portion')}</small></div>`
         }
       </div>`;
     if (hasSell && Number.isFinite(p.ratio) && a.status !== 'error') {
       const msg = {
         good: `Les ingrédients font <b>${pct(p.ratio)}</b> du prix HT, sous votre objectif de ${pct(a.target)}. Bien joué !`,
-        warn: `Les ingrédients font <b>${pct(p.ratio)}</b> du prix HT, un peu au-dessus de votre objectif de ${pct(a.target)}. Pour l’atteindre, vendez au moins <b>${money(p.roundedTTC)}</b> ou réduisez un peu les quantités.`,
-        bad: `Les ingrédients font <b>${pct(p.ratio)}</b> du prix HT, bien au-dessus de votre objectif de ${pct(a.target)}. Vendez au moins <b>${money(p.roundedTTC)}</b>, ou revoyez la recette ou vos achats.`,
+        warn: `Les ingrédients font <b>${pct(p.ratio)}</b> du prix HT, un peu au-dessus de votre objectif de ${pct(a.target)}. Pour l’atteindre, augmentez un peu le prix ou réduisez un peu les quantités.`,
+        bad: `Les ingrédients font <b>${pct(p.ratio)}</b> du prix HT, bien au-dessus de votre objectif de ${pct(a.target)}. Augmentez le prix, ou revoyez la recette ou vos achats.`,
       }[a.status];
       html += `
         <div class="verdict ${a.status}">
@@ -752,7 +737,7 @@ function viewRecipe(id, params) {
     // Barre résumé en bas d'écran
     $app.querySelector('#dock').innerHTML = `
       <div class="dock-info"><span>Coût / portion</span><b>${money(p.cost)}</b></div>
-      <div class="dock-info"><span>${hasSell ? 'Vendu' : 'Conseillé'}</span><b>${money(hasSell ? p.sellTTC : p.roundedTTC)}</b></div>
+      <div class="dock-info"><span>Vendu</span><b>${money(p.sellTTC)}</b></div>
       ${pill(a.status, p.ratio)}`;
     header();
   };
@@ -820,13 +805,6 @@ function viewRecipe(id, params) {
       pickItem(recipe, addItem);
     } else if (t.hasAttribute('data-scan')) {
       scanIntoRecipe(recipe, addItem);
-    } else if (t.hasAttribute('data-use-price')) {
-      const p = analyse(recipe).price;
-      recipe.sellTTC = Math.round(p.roundedTTC * 100) / 100;
-      $app.querySelector('[name="sellTTC"]').value = fmt(recipe.sellTTC);
-      persist();
-      drawResults();
-      toast('Prix conseillé appliqué');
     }
   });
 
@@ -973,7 +951,7 @@ async function shareRecipe(recipe) {
     const unit = it.type === 'rec' ? 'portion(s)' : unitLabel(it.unit, it.qty);
     lines.push(`• ${name ?? '?'} : ${fmt(num(it.qty))} ${unit} (${money(line.cost)})`);
   });
-  lines.push('', `Coût d’une portion : ${money(a.price.cost)}`, `Prix conseillé : ${money(a.price.roundedTTC)} TTC`);
+  lines.push('', `Coût d’une portion : ${money(a.price.cost)}`);
   if (Number.isFinite(a.price.sellTTC)) {
     lines.push(`Prix de vente : ${money(a.price.sellTTC)} TTC (ingrédients ${pct(a.price.ratio)})`);
   }
@@ -1334,7 +1312,7 @@ function viewCalculator() {
   setHeader('Calcul rapide', { back: true, help: 'ecran-calcul' });
   const s = db.settings;
   $app.innerHTML = `
-    <p class="intro">Un calcul express, sans créer de fiche.</p>
+    <p class="intro">Un calcul express, sans créer de fiche : le coût, votre prix, et le verdict.</p>
     <section class="step">
       <h2 class="step-title"><span class="step-n">1</span>Le coût des ingrédients</h2>
       <div class="card">
@@ -1350,11 +1328,10 @@ function viewCalculator() {
             <select id="c-vat" name="vat">${[5.5, 10, 20].map((v) => `<option value="${v}" ${String(calcState.vat || s.vatFood) === String(v) ? 'selected' : ''}>${fmt(v)} %</option>`).join('')}</select>
           </div>
         </div>
-        <div id="calc-suggest"></div>
       </div>
     </section>
     <section class="step">
-      <h2 class="step-title"><span class="step-n">2</span>Est-ce rentable ? <span class="opt">facultatif</span></h2>
+      <h2 class="step-title"><span class="step-n">2</span>Votre prix</h2>
       <div class="card">
         <label class="lbl" for="c-sell">Prix sur la carte (TTC)</label>
         <div class="input-unit big"><input id="c-sell" name="sell" inputmode="decimal" placeholder="0,00" value="${esc(calcState.sell)}" /><span>€</span></div>
@@ -1375,19 +1352,11 @@ function viewCalculator() {
       target,
       vat: calcState.vat || s.vatFood,
       sellTTC: calcState.sell,
-      roundStep: s.roundStep,
     });
     return { p, target };
   };
   const draw = () => {
     const { p, target } = compute();
-    $app.querySelector('#calc-suggest').innerHTML = Number.isFinite(p.suggestedTTC)
-      ? `<div class="suggest">
-          <div><span>Prix conseillé ${helpBtn('prix-conseille')}</span><b>${money(p.roundedTTC)}</b>
-          <small>soit ${money(p.suggestedHT)} HT (avant arrondi : ${money(p.suggestedTTC)})</small></div>
-          <button class="btn small-btn" data-use>Tester</button>
-        </div>`
-      : '<p class="hint first">Tapez le coût pour voir le prix conseillé.</p>';
     const status = ratioStatus(p.ratio, target);
     $app.querySelector('#calc-result').innerHTML =
       Number.isFinite(p.ratio) && status !== 'none'
@@ -1398,7 +1367,7 @@ function viewCalculator() {
              <div class="line"><span>Marge brute ${helpBtn('marge')}</span><b>${money(p.margin)}</b></div>
              <div class="line"><span>Coefficient ${helpBtn('coef')}</span><b>${coef(p.coef)}</b></div>
            </div>`
-        : '';
+        : '<p class="hint">Tapez le coût et votre prix de carte pour savoir si c’est rentable.</p>';
   };
   draw();
   const onInput = (e) => {
@@ -1407,12 +1376,6 @@ function viewCalculator() {
   };
   $app.addEventListener('input', onInput);
   $app.addEventListener('change', onInput);
-  $app.addEventListener('click', (e) => {
-    if (!e.target.closest('[data-use]')) return;
-    calcState.sell = fmt(compute().p.roundedTTC);
-    $app.querySelector('[name="sell"]').value = calcState.sell;
-    draw();
-  });
 }
 
 // ---------- Ventes et classement de la carte ----------
@@ -1872,22 +1835,6 @@ function viewSettings() {
     </section>
 
     <section class="step">
-      <h2 class="step-title">Prix conseillé</h2>
-      <div class="card">
-        <div class="field-row"><span class="lbl inline">Arrondir au-dessus à</span>
-          <select class="small" name="roundStep" aria-label="Arrondi">${[
-            [0, 'Pas d’arrondi'],
-            [0.1, '0,10 €'],
-            [0.5, '0,50 €'],
-            [1, '1 €'],
-          ]
-            .map(([v, l]) => `<option value="${v}" ${s.roundStep === v ? 'selected' : ''}>${l}</option>`)
-            .join('')}</select></div>
-        <p class="hint">Ex. avec 0,50 € : 11,23 € devient 11,50 €.</p>
-      </div>
-    </section>
-
-    <section class="step">
       <h2 class="step-title">Charges par portion <span class="opt">facultatif</span> ${helpBtn('charges')}</h2>
       <div class="card">
         <div class="field-row"><span class="lbl inline">Montant</span>
@@ -1921,7 +1868,7 @@ function viewSettings() {
     if (!(t.name in s)) return false;
     const v = num(t.value);
     if (t.name === 'overhead') s.overhead = Number.isFinite(v) && v > 0 ? v : 0;
-    else if (Number.isFinite(v) && (v > 0 || t.name === 'roundStep')) s[t.name] = v;
+    else if (Number.isFinite(v) && v > 0) s[t.name] = v;
     else return false;
     store.save();
     return true;
@@ -2011,7 +1958,7 @@ function viewGuide() {
       <ol class="steps card">
         <li><span class="step-n">1</span><div><b>Produits</b><p>Enregistrez ce que vous achetez avec le prix de la facture (HT) et la quantité. Scannez le code-barres quand il y en a un.</p></div></li>
         <li><span class="step-n">2</span><div><b>Fiches</b><p>Pour chaque plat ou cocktail, ajoutez les produits et les quantités utilisées. Indiquez combien de portions ça donne.</p></div></li>
-        <li><span class="step-n">3</span><div><b>Prix</b><p>L’appli calcule le coût d’une portion et propose un prix. Mettez votre prix de carte : la pastille devient verte si c’est rentable.</p></div></li>
+        <li><span class="step-n">3</span><div><b>Prix</b><p>L’appli calcule le coût d’une portion. Mettez votre prix de carte : la pastille devient verte si c’est rentable.</p></div></li>
         <li><span class="step-n">4</span><div><b>Ventes</b><p>Chaque mois, recopiez combien de fois chaque fiche s’est vendue. Vous voyez ce que chacune rapporte vraiment et quoi garder, pousser ou retirer.</p></div></li>
       </ol>
     </section>

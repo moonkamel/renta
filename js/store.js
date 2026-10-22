@@ -7,7 +7,6 @@ export const DEFAULT_SETTINGS = {
   targetDrink: 22, // ratio matière visé au bar (%)
   vatFood: 10, // TVA restauration sur place
   vatDrink: 20, // TVA boissons alcoolisées
-  roundStep: 0.5, // arrondi du prix conseillé (€)
   overhead: 0, // charges (personnel, loyer…) par portion, facultatif
 };
 
