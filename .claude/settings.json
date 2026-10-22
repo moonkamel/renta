@@ -1,0 +1,13 @@
+{
+  "extraKnownMarketplaces": {
+    "day-trader-fr": {
+      "source": {
+        "source": "github",
+        "repo": "dan-ai-lab/day-trader-fr"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "day-trader-fr@day-trader-fr": true
+  }
+}
