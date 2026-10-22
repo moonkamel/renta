@@ -87,7 +87,7 @@
 
 html {
   background: var(--bg);
-  scroll-padding-top: 110px;
+  scroll-padding-top: 90px;
   scroll-padding-bottom: 110px;
 }
 
@@ -165,20 +165,6 @@ b {
   height: 58px;
   margin: 0 auto;
   padding: 0 8px;
-}
-
-.tagline {
-  max-width: 680px;
-  margin: -6px auto 0;
-  padding: 0 12px 4px;
-  font-family: var(--serif);
-  font-style: italic;
-  font-size: 13.5px;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  opacity: 0.9;
 }
 
 .topbar h1 {
@@ -1986,14 +1972,6 @@ a.card-row:active {
   opacity: 0.92;
 }
 
-.welcome-brand .welcome-slogan {
-  margin-top: 18px;
-  font-family: var(--serif);
-  font-style: italic;
-  font-size: 23px;
-  line-height: 1.25;
-  opacity: 1;
-}
 
 .welcome-title {
   margin-top: 26px;
