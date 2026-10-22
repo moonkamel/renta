@@ -180,6 +180,7 @@ b {
 
 .lead {
   display: flex;
+  align-items: center;
 }
 
 .logo {
@@ -223,6 +224,88 @@ b {
 body[data-mode='welcome'] .topbar,
 body[data-mode='welcome'] .tabbar {
   display: none;
+}
+
+/* ---------- Sticker ---------- */
+
+.sticker {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  cursor: pointer;
+  transform-origin: 50% 40%;
+  filter: drop-shadow(0 1px 0.5px rgba(43, 29, 21, 0.35)) drop-shadow(0 4px 6px rgba(43, 29, 21, 0.28));
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.sticker img {
+  display: block;
+  width: 100%;
+  height: auto;
+  pointer-events: none;
+}
+
+/* Reflet du vinyle, découpé à la forme du sticker */
+.sticker::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(125deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0) 38%, rgba(255, 255, 255, 0) 70%, rgba(255, 255, 255, 0.18) 100%);
+  -webkit-mask: url('../img/sticker.webp') center / 100% 100% no-repeat;
+  mask: url('../img/sticker.webp') center / 100% 100% no-repeat;
+  pointer-events: none;
+}
+
+.sticker-hdr {
+  width: 50px;
+  margin: 0 2px 0 -10px;
+  transform: rotate(9deg) translateY(9px);
+  z-index: 2;
+}
+
+.welcome-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sticker-welcome {
+  width: 104px;
+  margin-left: -4px;
+  transform: rotate(-9deg) translateY(8px);
+  animation: stick 0.6s cubic-bezier(0.2, 1.4, 0.4, 1) 0.25s both;
+}
+
+@keyframes stick {
+  from {
+    opacity: 0;
+    transform: rotate(-24deg) scale(1.35) translateY(-20px);
+  }
+}
+
+.sticker.wiggle {
+  animation: wiggle 0.55s ease;
+}
+
+.sticker-hdr.wiggle {
+  animation-name: wiggle-hdr;
+}
+
+@keyframes wiggle {
+  0% { transform: rotate(-9deg) translateY(8px); }
+  25% { transform: rotate(-18deg) translateY(4px) scale(1.08); }
+  55% { transform: rotate(-2deg) translateY(8px) scale(1.03); }
+  80% { transform: rotate(-12deg) translateY(8px); }
+  100% { transform: rotate(-9deg) translateY(8px); }
+}
+
+@keyframes wiggle-hdr {
+  0% { transform: rotate(9deg) translateY(9px); }
+  25% { transform: rotate(18deg) translateY(7px) scale(1.12); }
+  55% { transform: rotate(2deg) translateY(9px) scale(1.05); }
+  80% { transform: rotate(12deg) translateY(9px); }
+  100% { transform: rotate(9deg) translateY(9px); }
 }
 
 /* ---------- Onglets ---------- */
@@ -1857,7 +1940,7 @@ a.card-row:active {
 
 .welcome-logo {
   font-family: var(--serif);
-  font-size: 64px;
+  font-size: clamp(46px, 15vw, 64px);
   line-height: 1;
   letter-spacing: 0.1em;
   text-transform: uppercase;

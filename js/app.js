@@ -288,11 +288,24 @@ function render({ restoreScroll = false } = {}) {
   render();
 }
 
+// Le sticker du patron, collé de travers à côté du logo.
+const sticker = (where) =>
+  `<span class="sticker sticker-${where}" role="img" aria-label="Le patron du Ici" data-sticker><img src="img/sticker.webp" alt="" width="475" height="420" decoding="async" /></span>`;
+
+document.addEventListener('click', (e) => {
+  const st = e.target.closest('[data-sticker]');
+  if (!st) return;
+  st.classList.remove('wiggle');
+  void st.offsetWidth; // relance l'animation
+  st.classList.add('wiggle');
+  navigator.vibrate?.(15);
+});
+
 function setHeader(title, { back = false, help = null, menu = null } = {}) {
   $title.textContent = title;
   $lead.innerHTML = back
     ? `<button class="hdr-btn" data-back aria-label="Retour">${icons.back}</button>`
-    : `<a class="logo" href="#/fiches" aria-label="Accueil">Le Ici</a>`;
+    : `<a class="logo" href="#/fiches" aria-label="Accueil">Le Ici</a>${sticker('hdr')}`;
   $lead.querySelector('[data-back]')?.addEventListener('click', goBack);
   if (help) {
     $help.hidden = false;
@@ -323,7 +336,7 @@ function viewWelcome() {
   $app.innerHTML = `
     <section class="welcome">
       <div class="welcome-brand">
-        <div class="welcome-logo">Le Ici</div>
+        <div class="welcome-mark"><div class="welcome-logo">Le Ici</div>${sticker('welcome')}</div>
         <p>Le carnet de rentabilité<br/>de la cuisine et du bar</p>
       </div>
       <div class="tiles-band" aria-hidden="true"></div>
