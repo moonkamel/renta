@@ -277,54 +277,55 @@ body[data-mode='welcome'] .tabbar {
 }
 
 .sticker-hdr {
-  width: 50px;
-  margin: 0 2px 0 -10px;
-  transform: rotate(9deg) translateY(9px);
+  /* Même hauteur que l'étiquette « LE ICI », droit et centré avec elle */
+  height: 38px;
+  width: auto;
+  margin: 0 4px 0 8px;
   z-index: 2;
+}
+
+.sticker-hdr img {
+  height: 100%;
+  width: auto;
 }
 
 .welcome-mark {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: center;
 }
 
 .sticker-welcome {
-  width: 104px;
-  margin-left: -4px;
-  transform: rotate(-9deg) translateY(8px);
+  /* Même hauteur que les lettres « LE ICI », droit et centré avec elles */
+  height: 0.72em;
+  width: auto;
+  margin-left: 0.25em;
+  font-size: clamp(46px, 15vw, 64px);
   animation: stick 0.6s cubic-bezier(0.2, 1.4, 0.4, 1) 0.25s both;
+}
+
+.sticker-welcome img {
+  height: 100%;
+  width: auto;
 }
 
 @keyframes stick {
   from {
     opacity: 0;
-    transform: rotate(-24deg) scale(1.35) translateY(-20px);
+    transform: scale(1.35) translateY(-12px);
   }
 }
 
 .sticker.wiggle {
-  animation: wiggle 0.55s ease;
-}
-
-.sticker-hdr.wiggle {
-  animation-name: wiggle-hdr;
+  animation: wiggle 0.5s ease;
 }
 
 @keyframes wiggle {
-  0% { transform: rotate(-9deg) translateY(8px); }
-  25% { transform: rotate(-18deg) translateY(4px) scale(1.08); }
-  55% { transform: rotate(-2deg) translateY(8px) scale(1.03); }
-  80% { transform: rotate(-12deg) translateY(8px); }
-  100% { transform: rotate(-9deg) translateY(8px); }
-}
-
-@keyframes wiggle-hdr {
-  0% { transform: rotate(9deg) translateY(9px); }
-  25% { transform: rotate(18deg) translateY(7px) scale(1.12); }
-  55% { transform: rotate(2deg) translateY(9px) scale(1.05); }
-  80% { transform: rotate(12deg) translateY(9px); }
-  100% { transform: rotate(9deg) translateY(9px); }
+  0% { transform: none; }
+  25% { transform: rotate(-8deg) scale(1.08); }
+  55% { transform: rotate(5deg) scale(1.03); }
+  80% { transform: rotate(-2deg); }
+  100% { transform: none; }
 }
 
 /* ---------- Onglets ---------- */
