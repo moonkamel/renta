@@ -341,7 +341,7 @@ function render({ restoreScroll = false } = {}) {
 
 // Le sticker du patron, collé de travers à côté du logo.
 const sticker = (where) =>
-  `<span class="sticker sticker-${where}" role="img" aria-label="Le patron du Ici" data-sticker><img src="img/sticker.webp" alt="" width="475" height="420" decoding="async" /><i class="tape" aria-hidden="true"></i></span>`;
+  `<span class="sticker sticker-${where}" role="img" aria-label="Le patron du Ici" data-sticker><img src="img/sticker.webp" alt="" width="475" height="420" decoding="async" /></span>`;
 
 document.addEventListener('click', (e) => {
   const st = e.target.closest('[data-sticker]');

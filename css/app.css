@@ -234,7 +234,8 @@ body[data-mode='welcome'] .tabbar {
   flex: none;
   cursor: pointer;
   transform-origin: 50% 40%;
-  filter: drop-shadow(0 1px 0.5px rgba(43, 29, 21, 0.35)) drop-shadow(0 4px 6px rgba(43, 29, 21, 0.28));
+  /* Ombre très courte : le sticker est plaqué contre le mur, pas posé au-dessus */
+  filter: drop-shadow(0 0.5px 0 rgba(43, 29, 21, 0.45)) drop-shadow(0.5px 1.5px 1.5px rgba(43, 29, 21, 0.3));
   -webkit-user-select: none;
   user-select: none;
 }
@@ -247,36 +248,32 @@ body[data-mode='welcome'] .tabbar {
 }
 
 /* Reflet du vinyle, découpé à la forme du sticker */
-.sticker::after {
+/* Grain du mur qui transparaît à travers le vinyle */
+.sticker::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(125deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0) 38%, rgba(255, 255, 255, 0) 70%, rgba(255, 255, 255, 0.18) 100%);
+  z-index: 1;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .38 0 0 0 0 .32 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E") 0 0 / 60px 60px;
+  mix-blend-mode: multiply;
+  opacity: 0.55;
   -webkit-mask: url('../img/sticker.webp') center / 100% 100% no-repeat;
   mask: url('../img/sticker.webp') center / 100% 100% no-repeat;
   pointer-events: none;
 }
 
-/* Morceau de scotch qui tient le sticker au mur */
-.tape {
+/* Reflet du vinyle et léger pli, comme un autocollant appliqué à la main */
+.sticker::after {
+  content: '';
   position: absolute;
-  top: -6%;
-  left: 50%;
-  width: 60%;
-  height: 21%;
-  transform: translateX(-50%) rotate(-26deg);
+  inset: 0;
+  z-index: 2;
   background:
-    linear-gradient(90deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0.25) 70%, rgba(255, 255, 255, 0)),
-    rgba(247, 240, 220, 0.84);
-  box-shadow: 0 1px 1.5px rgba(43, 29, 21, 0.18);
-  /* bords déchirés */
-  clip-path: polygon(3% 0, 97% 0, 100% 12%, 96% 25%, 100% 38%, 96% 50%, 100% 63%, 96% 75%, 100% 88%, 97% 100%, 3% 100%, 0 88%, 4% 75%, 0 63%, 4% 50%, 0 38%, 4% 25%, 0 12%);
-  z-index: 1;
+    linear-gradient(140deg, transparent 84%, rgba(255, 255, 255, 0.55) 85.5%, rgba(255, 255, 255, 0) 87%, rgba(43, 29, 21, 0.14) 88%, transparent 90%),
+    linear-gradient(125deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 35%, rgba(255, 255, 255, 0) 72%, rgba(255, 255, 255, 0.15) 100%);
+  -webkit-mask: url('../img/sticker.webp') center / 100% 100% no-repeat;
+  mask: url('../img/sticker.webp') center / 100% 100% no-repeat;
   pointer-events: none;
-}
-
-.sticker-welcome .tape {
-  transform: translateX(-50%) rotate(24deg);
 }
 
 .sticker-hdr {
