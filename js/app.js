@@ -331,16 +331,9 @@ function viewWelcome() {
         <li><span class="step-n">2</span><div><b>Créez vos fiches</b><p>Pour chaque plat ou cocktail : les ingrédients et leurs quantités.</p></div></li>
         <li><span class="step-n">3</span><div><b>Fixez le bon prix</b><p>L’appli calcule le coût d’une portion, le prix de vente conseillé et ce qu’il vous reste.</p></div></li>
       </ol>
-      <button class="btn primary block big" data-demo>${icons.sparkle} Découvrir avec un exemple</button>
-      <button class="btn block big" data-start>Commencer avec ma carte</button>
+      <button class="btn primary block big" data-start>Commencer</button>
       <p class="fine">Vos données restent sur ce téléphone. Aucun compte à créer.</p>
     </section>`;
-  $app.querySelector('[data-demo]').onclick = () => {
-    if (!db.recipes.length) store.loadDemo();
-    setOnboarded();
-    go('#/fiches', true);
-    setTimeout(() => toast('Exemple chargé : touchez une fiche pour l’ouvrir'), 400);
-  };
   $app.querySelector('[data-start]').onclick = () => {
     setOnboarded();
     go('#/produits', true);
@@ -369,13 +362,8 @@ function viewRecipes() {
                <button class="btn block" data-new>Créer une fiche quand même</button>`
             : `<button class="btn primary block big" data-new>${icons.plus} Créer ma première fiche</button>`
         }
-        <button class="btn ghost block" data-demo>Charger l’exemple</button>
       </div>`;
     $app.querySelector('[data-new]').onclick = () => newRecipe();
-    $app.querySelector('[data-demo]').onclick = () => {
-      store.loadDemo();
-      render();
-    };
     return;
   }
 
@@ -1429,7 +1417,6 @@ function viewSettings() {
     <section class="step">
       <h2 class="step-title">Autres</h2>
       <div class="card">
-        <button class="btn block" data-demo>${icons.sparkle} Ajouter les fiches d’exemple</button>
         <button class="btn danger block" data-reset>${icons.trash} Tout effacer</button>
       </div>
       <p class="fine">Le Ici · ${plural(db.ingredients.length, 'produit')} · ${plural(db.recipes.length, 'fiche')}</p>
@@ -1451,11 +1438,6 @@ function viewSettings() {
 
   $app.querySelector('[data-export]').onclick = exportData;
   $app.querySelector('input[type="file"]').onchange = importData;
-  $app.querySelector('[data-demo]').onclick = () => {
-    store.loadDemo();
-    toast('Exemples ajoutés');
-    go('#/fiches');
-  };
   $app.querySelector('[data-reset]').onclick = async () => {
     const ok = await confirmSheet({
       title: 'Tout effacer ?',

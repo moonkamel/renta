@@ -57,7 +57,7 @@ npm test    # tests du moteur de calcul
 ```
 
 - `js/calc.js` — calculs (unités, coûts, prix), testés dans `test/`
-- `js/store.js` — stockage local et données d'exemple
+- `js/store.js` — stockage local
 - `js/scanner.js` — scan (BarcodeDetector natif, ou ZXing dans `vendor/` sur iPhone) et Open Food Facts
 - `js/app.js` — écrans
 - `js/help.js` — textes d'aide et lexique

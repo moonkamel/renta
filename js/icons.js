@@ -29,5 +29,4 @@ export const icons = {
   book: svg('<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5M8 7h7"/>'),
   up: svg('<path d="M12 19V5M6 11l6-6 6 6"/>', 'stroke-width="2.2"'),
   down: svg('<path d="M12 5v14M6 13l6 6 6-6"/>', 'stroke-width="2.2"'),
-  sparkle: svg('<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>'),
 };
